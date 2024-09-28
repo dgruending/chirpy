@@ -40,8 +40,8 @@ func main() {
 	serverMux.HandleFunc("GET /api/healthz", handlerReady)
 	serverMux.HandleFunc("GET /admin/metrics", apiCfg.hitHandler)
 	serverMux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
-	serverMux.HandleFunc("POST /api/validate_chirp", chirpValidationHandler)
 	serverMux.HandleFunc("POST /api/users", apiCfg.createUserHandler)
+	serverMux.HandleFunc("POST /api/chirps", apiCfg.chirpHandler)
 
 	server := http.Server{
 		Addr:    ":8080",

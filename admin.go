@@ -1,6 +1,9 @@
 package main
 
-import "net/http"
+import (
+	"log"
+	"net/http"
+)
 
 func (cfg *apiConfig) resetHandler(respWriter http.ResponseWriter, request *http.Request) {
 	respWriter.Header().Add("Content-Type", "text/plain; charset=utf-8")
@@ -15,6 +18,7 @@ func (cfg *apiConfig) resetHandler(respWriter http.ResponseWriter, request *http
 	cfg.fileserverHits.Store(0)
 	err := cfg.dbQueries.ClearUsers(request.Context())
 	if err != nil {
+		log.Printf("Error while deleting users: %v", err)
 		respondWithError(respWriter, http.StatusInternalServerError, "Error while deleting users")
 		return
 	}

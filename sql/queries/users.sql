@@ -9,4 +9,4 @@ VALUES (
 RETURNING *;
 
 -- name: ClearUsers :exec
-TRUNCATE users;
+TRUNCATE users CASCADE;
