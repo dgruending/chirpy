@@ -15,6 +15,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQueries      *database.Queries
+	platform       string
 }
 
 func main() {
@@ -29,13 +30,18 @@ func main() {
 		log.Fatal("Error connecting to database")
 	}
 
-	apiCfg := apiConfig{fileserverHits: atomic.Int32{}, dbQueries: database.New(db)}
+	apiCfg := apiConfig{
+		fileserverHits: atomic.Int32{},
+		dbQueries:      database.New(db),
+		platform:       os.Getenv("PLATFORM"),
+	}
 	serverMux := http.NewServeMux()
 	serverMux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 	serverMux.HandleFunc("GET /api/healthz", handlerReady)
 	serverMux.HandleFunc("GET /admin/metrics", apiCfg.hitHandler)
-	serverMux.HandleFunc("POST /admin/reset", apiCfg.resetHitsHandler)
+	serverMux.HandleFunc("POST /admin/reset", apiCfg.resetHandler)
 	serverMux.HandleFunc("POST /api/validate_chirp", chirpValidationHandler)
+	serverMux.HandleFunc("POST /api/users", apiCfg.createUserHandler)
 
 	server := http.Server{
 		Addr:    ":8080",

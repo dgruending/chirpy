@@ -20,7 +20,6 @@ func chirpValidationHandler(writer http.ResponseWriter, request *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		log.Fatal()
 		respondWithError(writer, http.StatusInternalServerError, "Error while decoding parameters.")
 		return
 	}
