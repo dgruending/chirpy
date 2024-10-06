@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgruending/chirpy/internal/auth"
 	"github.com/dgruending/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -48,8 +49,7 @@ func cleanBadWords(chirp string) string {
 
 func (cfg *apiConfig) createChirpHandler(writer http.ResponseWriter, request *http.Request) {
 	type parameters struct {
-		Chirp  string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
+		Chirp string `json:"body"`
 	}
 	decoder := json.NewDecoder(request.Body)
 	params := parameters{}
@@ -59,12 +59,23 @@ func (cfg *apiConfig) createChirpHandler(writer http.ResponseWriter, request *ht
 		return
 	}
 
+	token, err := auth.GetBearerToken(request.Header)
+	if err != nil {
+		respondWithError(writer, http.StatusUnauthorized, "No valid Token in Header")
+		return
+	}
+	userID, err := auth.ValidateJWT(token, cfg.serverSecret)
+	if err != nil {
+		respondWithError(writer, http.StatusUnauthorized, "Token expired or invalid")
+		return
+	}
+
 	if !validateLength(params.Chirp) {
 		respondWithError(writer, http.StatusBadRequest, "Chirp is too long")
 		return
 	}
 
-	data, err := cfg.dbQueries.CreateChirp(request.Context(), database.CreateChirpParams{Body: params.Chirp, UserID: params.UserID})
+	data, err := cfg.dbQueries.CreateChirp(request.Context(), database.CreateChirpParams{Body: params.Chirp, UserID: userID})
 	if err != nil {
 		respondWithError(writer, http.StatusInternalServerError, "Error creating chirp")
 		log.Printf("Error while creating user: %v", err)
